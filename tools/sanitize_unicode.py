@@ -7,58 +7,78 @@ from pathlib import Path
 
 TARGET_EXTENSIONS = {".py", ".md", ".toml", ".yml", ".yaml", ".txt"}
 
+BOM_BYTES = b"\xef\xbb\xbf"
+
 REMOVE_CODEPOINTS = {
-    "\ufeff",  # BOM
-    "\u200b",  # zero-width space
-    "\u200c",  # zero-width non-joiner
-    "\u200d",  # zero-width joiner
-    "\u2060",  # word joiner
-    "\u200e",  # left-to-right mark
-    "\u200f",  # right-to-left mark
-    "\u061c",  # arabic letter mark
-    "\u202a",  # left-to-right embedding
-    "\u202b",  # right-to-left embedding
-    "\u202c",  # pop directional formatting
-    "\u202d",  # left-to-right override
-    "\u202e",  # right-to-left override
-    "\u2066",  # left-to-right isolate
-    "\u2067",  # right-to-left isolate
-    "\u2068",  # first strong isolate
-    "\u2069",  # pop directional isolate
-    "\u2028",  # line separator
-    "\u2029",  # paragraph separator
+    0xFEFF,
+    0x200B,
+    0x200C,
+    0x200D,
+    0x2060,
+    0x061C,
+    0x200E,
+    0x200F,
+    0x202A,
+    0x202B,
+    0x202C,
+    0x202D,
+    0x202E,
+    0x2066,
+    0x2067,
+    0x2068,
+    0x2069,
+    0x2028,
+    0x2029,
 }
 
 
-@dataclass
+@dataclass(frozen=True)
 class SanitizationResult:
     path: Path
     removed_count: int
     rewritten: bool
 
 
-def sanitize_text(text: str) -> tuple[str, int]:
+def strip_hidden(text: str) -> tuple[str, int]:
     removed = 0
-    for char in REMOVE_CODEPOINTS:
-        count = text.count(char)
-        if count:
-            removed += count
-            text = text.replace(char, "")
-    return text, removed
+    chars = []
+    for char in text:
+        if ord(char) in REMOVE_CODEPOINTS:
+            removed += 1
+        else:
+            chars.append(char)
+    return "".join(chars), removed
+
+
+def normalize_newlines(text: str) -> str:
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def sanitize_file(path: Path) -> SanitizationResult:
-    raw = path.read_text(encoding="utf-8", errors="surrogatepass")
-    sanitized, removed = sanitize_text(raw)
+    raw_bytes = path.read_bytes()
+    had_bom = raw_bytes.startswith(BOM_BYTES)
+    if had_bom:
+        raw_bytes = raw_bytes[len(BOM_BYTES) :]
+
+    raw_text = raw_bytes.decode("utf-8", errors="strict")
+    normalized = normalize_newlines(raw_text)
+    sanitized, removed = strip_hidden(normalized)
+
     rewritten = False
-    if sanitized != raw:
+    removed_count = removed + (1 if had_bom else 0)
+    if had_bom or sanitized != raw_text:
         path.write_text(sanitized, encoding="utf-8", newline="\n")
         rewritten = True
-    return SanitizationResult(path=path, removed_count=removed, rewritten=rewritten)
+
+    return SanitizationResult(
+        path=path,
+        removed_count=removed_count,
+        rewritten=rewritten,
+    )
 
 
 def iter_target_files(root: Path) -> list[Path]:
-    paths = []
+    paths: list[Path] = []
     for path in root.rglob("*"):
         if path.is_dir():
             continue

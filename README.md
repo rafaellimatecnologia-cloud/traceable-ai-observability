@@ -14,7 +14,7 @@ It focuses on stable event schemas, deterministic replays, and portable export b
 ## Install
 
 ```bash
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 ```
 
 ## Quickstart

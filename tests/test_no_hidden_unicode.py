@@ -4,31 +4,33 @@ from pathlib import Path
 
 TARGET_EXTENSIONS = {".py", ".md", ".toml", ".yml", ".yaml", ".txt"}
 
+BOM_BYTES = b"\xef\xbb\xbf"
+
 REMOVE_CODEPOINTS = {
-    "\ufeff",
-    "\u200b",
-    "\u200c",
-    "\u200d",
-    "\u2060",
-    "\u200e",
-    "\u200f",
-    "\u061c",
-    "\u202a",
-    "\u202b",
-    "\u202c",
-    "\u202d",
-    "\u202e",
-    "\u2066",
-    "\u2067",
-    "\u2068",
-    "\u2069",
-    "\u2028",
-    "\u2029",
+    0xFEFF,
+    0x200B,
+    0x200C,
+    0x200D,
+    0x2060,
+    0x061C,
+    0x200E,
+    0x200F,
+    0x202A,
+    0x202B,
+    0x202C,
+    0x202D,
+    0x202E,
+    0x2066,
+    0x2067,
+    0x2068,
+    0x2069,
+    0x2028,
+    0x2029,
 }
 
 
 def iter_target_files(root: Path) -> list[Path]:
-    paths = []
+    paths: list[Path] = []
     for path in root.rglob("*"):
         if path.is_dir():
             continue
@@ -43,7 +45,11 @@ def test_no_hidden_unicode() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     offenders: list[str] = []
     for path in iter_target_files(repo_root):
-        text = path.read_text(encoding="utf-8", errors="surrogatepass")
-        if any(char in text for char in REMOVE_CODEPOINTS):
+        data = path.read_bytes()
+        has_bom = data.startswith(BOM_BYTES)
+        if has_bom:
+            data = data[len(BOM_BYTES) :]
+        text = data.decode("utf-8", errors="strict")
+        if has_bom or any(ord(char) in REMOVE_CODEPOINTS for char in text):
             offenders.append(str(path.relative_to(repo_root)))
     assert offenders == [], f"Hidden unicode found in: {', '.join(offenders)}"
