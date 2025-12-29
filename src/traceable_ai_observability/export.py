@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
-from typing import Iterable
 
 from .events import AuditEvent
 
@@ -41,7 +41,10 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def write_bundle(events: Iterable[AuditEvent], output_dir: str | Path) -> BundleManifest:
+def write_bundle(
+    events: Iterable[AuditEvent],
+    output_dir: str | Path,
+) -> BundleManifest:
     """Write JSONL events and a manifest with hashes."""
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -58,7 +61,7 @@ def write_bundle(events: Iterable[AuditEvent], output_dir: str | Path) -> Bundle
         "events.jsonl": _file_sha256(events_path),
     }
     manifest = BundleManifest(
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
         event_count=event_count,
         files=files,
     )

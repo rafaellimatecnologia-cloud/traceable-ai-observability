@@ -26,7 +26,10 @@ def main() -> None:
     input_value = 10
 
     events = [
-        context.event(event_type="start", payload={"input": input_value, "route": route}),
+        context.event(
+            event_type="start",
+            payload={"input": input_value, "route": route},
+        ),
     ]
 
     output_value = demo_pipeline(input_value, route)

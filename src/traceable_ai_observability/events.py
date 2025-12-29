@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Mapping
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -29,9 +30,9 @@ class AuditEvent:
         event_type: str,
         payload: Mapping[str, Any] | None = None,
         timestamp: datetime | None = None,
-    ) -> "AuditEvent":
+    ) -> AuditEvent:
         """Create an event with a UTC timestamp."""
-        event_time = timestamp or datetime.now(timezone.utc)
+        event_time = timestamp or datetime.now(UTC)
         return cls(
             trace_id=trace_id,
             decision_id=decision_id,

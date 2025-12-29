@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from traceable_ai_observability.events import AuditEvent
 
 
 def test_canonical_json_stability() -> None:
-    timestamp = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    timestamp = datetime(2024, 1, 1, tzinfo=UTC)
     event = AuditEvent.create(
         trace_id="trace",
         decision_id="decision",

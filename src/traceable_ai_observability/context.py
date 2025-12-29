@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Mapping
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from .events import AuditEvent
@@ -20,7 +21,12 @@ class TraceContext:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def new(cls, *, subsystem: str, metadata: Mapping[str, Any] | None = None) -> "TraceContext":
+    def new(
+        cls,
+        *,
+        subsystem: str,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> TraceContext:
         """Create a new trace context with fresh identifiers."""
         return cls(
             trace_id=uuid4().hex,
@@ -40,7 +46,7 @@ class TraceContext:
         combined_payload: dict[str, Any] = {**self.metadata}
         if payload:
             combined_payload.update(payload)
-        event_time = timestamp or datetime.now(timezone.utc)
+        event_time = timestamp or datetime.now(UTC)
         return AuditEvent(
             trace_id=self.trace_id,
             decision_id=self.decision_id,
