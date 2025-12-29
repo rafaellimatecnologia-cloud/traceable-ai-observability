@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 TARGET_EXTENSIONS = {".py", ".md", ".toml", ".yml", ".yaml", ".txt"}
@@ -30,11 +31,17 @@ REMOVE_CODEPOINTS = {
 
 
 def iter_target_files(root: Path) -> list[Path]:
+    result = subprocess.run(
+        ["git", "ls-files"],
+        check=True,
+        cwd=root,
+        capture_output=True,
+        text=True,
+    )
     paths: list[Path] = []
-    for path in root.rglob("*"):
-        if path.is_dir():
-            continue
-        if ".git" in path.parts:
+    for line in result.stdout.splitlines():
+        path = root / line.strip()
+        if not path.exists():
             continue
         if path.suffix.lower() in TARGET_EXTENSIONS:
             paths.append(path)
