@@ -52,6 +52,12 @@ report = replay_pipeline(
 print("Replay match:", report.match)
 ```
 
+Run the demo:
+
+```bash
+python examples/demo_pipeline.py
+```
+
 ## Development
 
 ```bash

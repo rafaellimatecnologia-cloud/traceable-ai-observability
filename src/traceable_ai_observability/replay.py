@@ -28,10 +28,11 @@ def replay_pipeline(
     expected_output: Any,
 ) -> ReplayReport:
     """Re-run a pipeline deterministically and compare outputs."""
-    actual = pipeline(input_data, captured_route)
+    route = list(captured_route)
+    actual = pipeline(input_data, route)
     return ReplayReport(
         input_data=input_data,
-        captured_route=captured_route,
+        captured_route=route,
         expected_output=expected_output,
         actual_output=actual,
         match=actual == expected_output,
