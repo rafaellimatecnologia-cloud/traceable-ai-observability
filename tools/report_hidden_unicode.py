@@ -72,9 +72,9 @@ def main() -> int:
         if not has_bom and not found:
             continue
         flagged += 1
-        bom_status = "BOM" if has_bom else "no BOM"
+        bom_status = "yes" if has_bom else "no"
         codepoints = format_codepoints(found) if found else "none"
-        print(f"{path.relative_to(root)} -> {bom_status}; codepoints: {codepoints}")
+        print(f"{path.relative_to(root)} -> bom={bom_status}; codepoints: {codepoints}")
     if flagged == 0:
         print("No hidden unicode found.")
     return 0

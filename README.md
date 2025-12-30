@@ -62,6 +62,8 @@ python examples/demo_pipeline.py
 
 ```bash
 python -m pip install -e ".[dev]"
+python tools/report_hidden_unicode.py
+python tools/sanitize_unicode.py
 pytest
 ruff check .
 ```
