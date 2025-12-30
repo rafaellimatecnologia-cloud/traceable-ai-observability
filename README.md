@@ -17,8 +17,6 @@ It focuses on stable event schemas, deterministic replays, and portable export b
 python -m pip install -e ".[dev]"
 ```
 
-This installs the library along with development tools like `ruff` and `pytest`.
-
 ## Quickstart
 
 ```python

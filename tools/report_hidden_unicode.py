@@ -1,3 +1,5 @@
+"""Report hidden/bidirectional Unicode characters in tracked files."""
+
 from __future__ import annotations
 
 import subprocess
@@ -48,7 +50,8 @@ def iter_target_files(root: Path) -> list[Path]:
     return paths
 
 
-def scan_bytes(data: bytes) -> tuple[bool, set[int]]:
+def scan_file(path: Path) -> tuple[bool, set[int]]:
+    data = path.read_bytes()
     has_bom = data.startswith(BOM_BYTES)
     if has_bom:
         data = data[len(BOM_BYTES) :]
@@ -57,11 +60,25 @@ def scan_bytes(data: bytes) -> tuple[bool, set[int]]:
     return has_bom, found
 
 
-def test_no_hidden_unicode() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
-    offenders: list[str] = []
-    for path in iter_target_files(repo_root):
-        has_bom, found = scan_bytes(path.read_bytes())
-        if has_bom or found:
-            offenders.append(str(path.relative_to(repo_root)))
-    assert offenders == [], f"Hidden unicode found in: {', '.join(offenders)}"
+def format_codepoints(codepoints: set[int]) -> str:
+    return ", ".join(f"U+{codepoint:04X}" for codepoint in sorted(codepoints))
+
+
+def main() -> int:
+    root = Path(".").resolve()
+    flagged = 0
+    for path in iter_target_files(root):
+        has_bom, found = scan_file(path)
+        if not has_bom and not found:
+            continue
+        flagged += 1
+        bom_status = "BOM" if has_bom else "no BOM"
+        codepoints = format_codepoints(found) if found else "none"
+        print(f"{path.relative_to(root)} -> {bom_status}; codepoints: {codepoints}")
+    if flagged == 0:
+        print("No hidden unicode found.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

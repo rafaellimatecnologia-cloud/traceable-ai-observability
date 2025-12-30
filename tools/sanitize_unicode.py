@@ -36,8 +36,19 @@ REMOVE_CODEPOINTS = {
 @dataclass(frozen=True)
 class SanitizationResult:
     path: Path
+    bom_removed: bool
+    codepoints_removed: set[int]
     removed_count: int
     rewritten: bool
+
+
+def find_hidden_unicode(data: bytes) -> tuple[bool, set[int], str]:
+    has_bom = data.startswith(BOM_BYTES)
+    if has_bom:
+        data = data[len(BOM_BYTES) :]
+    text = data.decode("utf-8", errors="strict")
+    found = {ord(char) for char in text if ord(char) in REMOVE_CODEPOINTS}
+    return has_bom, found, text
 
 
 def strip_hidden(text: str) -> tuple[str, int]:
@@ -57,22 +68,20 @@ def normalize_newlines(text: str) -> str:
 
 def sanitize_file(path: Path) -> SanitizationResult:
     raw_bytes = path.read_bytes()
-    had_bom = raw_bytes.startswith(BOM_BYTES)
-    if had_bom:
-        raw_bytes = raw_bytes[len(BOM_BYTES) :]
-
-    raw_text = raw_bytes.decode("utf-8", errors="strict")
+    has_bom, found, raw_text = find_hidden_unicode(raw_bytes)
     normalized = normalize_newlines(raw_text)
     sanitized, removed = strip_hidden(normalized)
 
     rewritten = False
-    removed_count = removed + (1 if had_bom else 0)
-    if had_bom or sanitized != raw_text:
+    removed_count = removed + (1 if has_bom else 0)
+    if has_bom or found or sanitized != raw_text:
         path.write_text(sanitized, encoding="utf-8", newline="\n")
         rewritten = True
 
     return SanitizationResult(
         path=path,
+        bom_removed=has_bom,
+        codepoints_removed=found,
         removed_count=removed_count,
         rewritten=rewritten,
     )
