@@ -1,57 +1,38 @@
-"""Trace context helpers."""
+"""Trace context primitives."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
-from typing import Any
-from uuid import uuid4
+import random
+from dataclasses import dataclass
 
-from .events import AuditEvent
+
+def _generate_id(rng: random.Random, length: int = 16) -> str:
+    alphabet = "0123456789abcdef"
+    return "".join(rng.choice(alphabet) for _ in range(length))
 
 
 @dataclass(frozen=True)
 class TraceContext:
-    """Generate trace identifiers and consistent metadata."""
+    """Context for correlating logs, metrics, and snapshots."""
 
     trace_id: str
-    decision_id: str
-    subsystem: str
-    metadata: Mapping[str, Any] = field(default_factory=dict)
+    span_id: str
+    parent_id: str | None = None
 
     @classmethod
-    def new(
-        cls,
-        *,
-        subsystem: str,
-        metadata: Mapping[str, Any] | None = None,
-    ) -> TraceContext:
-        """Create a new trace context with fresh identifiers."""
+    def new(cls) -> TraceContext:
+        rng = random.Random()
         return cls(
-            trace_id=uuid4().hex,
-            decision_id=uuid4().hex,
-            subsystem=subsystem,
-            metadata=metadata or {},
+            trace_id=_generate_id(rng),
+            span_id=_generate_id(rng),
+            parent_id=None,
         )
 
-    def event(
-        self,
-        *,
-        event_type: str,
-        payload: Mapping[str, Any] | None = None,
-        timestamp: datetime | None = None,
-    ) -> AuditEvent:
-        """Create an audit event within the trace context."""
-        combined_payload: dict[str, Any] = {**self.metadata}
-        if payload:
-            combined_payload.update(payload)
-        event_time = timestamp or datetime.now(UTC)
-        return AuditEvent(
-            trace_id=self.trace_id,
-            decision_id=self.decision_id,
-            timestamp=event_time.isoformat(),
-            subsystem=self.subsystem,
-            event_type=event_type,
-            payload=combined_payload,
+    @classmethod
+    def from_seed(cls, seed: int, parent_id: str | None = None) -> TraceContext:
+        rng = random.Random(seed)
+        return cls(
+            trace_id=_generate_id(rng),
+            span_id=_generate_id(rng),
+            parent_id=parent_id,
         )

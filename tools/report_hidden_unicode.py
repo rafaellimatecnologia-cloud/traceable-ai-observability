@@ -67,7 +67,9 @@ def format_codepoints(codepoints: set[int]) -> str:
 def main() -> int:
     root = Path(".").resolve()
     flagged = 0
+    scanned = 0
     for path in iter_target_files(root):
+        scanned += 1
         has_bom, found = scan_file(path)
         if not has_bom and not found:
             continue
@@ -76,7 +78,7 @@ def main() -> int:
         codepoints = format_codepoints(found) if found else "none"
         print(f"{path.relative_to(root)} -> bom={bom_status}; codepoints: {codepoints}")
     if flagged == 0:
-        print("No hidden unicode found.")
+        print(f"No hidden unicode found in {scanned} files.")
     return 0
 
 

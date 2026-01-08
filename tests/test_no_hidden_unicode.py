@@ -60,8 +60,12 @@ def scan_bytes(data: bytes) -> tuple[bool, set[int]]:
 def test_no_hidden_unicode() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     offenders: list[str] = []
+    scanned = 0
     for path in iter_target_files(repo_root):
+        scanned += 1
         has_bom, found = scan_bytes(path.read_bytes())
         if has_bom or found:
             offenders.append(str(path.relative_to(repo_root)))
-    assert offenders == [], f"Hidden unicode found in: {', '.join(offenders)}"
+    assert offenders == [], (
+        f"Hidden unicode found in: {', '.join(offenders)} (scanned {scanned} files)"
+    )

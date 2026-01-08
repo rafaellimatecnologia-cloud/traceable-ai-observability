@@ -1,61 +1,75 @@
 # traceable-ai-observability
 
-A minimal, production-minded tracing and audit logging toolkit for decision pipelines.
-It focuses on stable event schemas, deterministic replays, and portable export bundles.
+[![CI](https://github.com/rafaellimatecnologia-cloud/traceable-ai-observability/actions/workflows/ci.yml/badge.svg)](https://github.com/rafaellimatecnologia-cloud/traceable-ai-observability/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Ruff](https://img.shields.io/badge/ruff-enabled-000000)
+![Tests](https://img.shields.io/badge/tests-pytest-blue)
+![Types](https://img.shields.io/badge/types-pyright-blueviolet)
+![Coverage](https://img.shields.io/badge/coverage-artifact-informational)
 
-## Features
+**Portfolio Note (Safe-to-Publish):** This repository is a clean-room sample intended for public review.
 
-- **Event schema**: `AuditEvent` dataclass with canonical JSON serialization.
-- **Trace context**: `TraceContext` helper for consistent trace/decision identifiers.
-- **Replay**: re-run deterministic pipelines and compare outputs.
-- **Export bundle**: JSONL events plus a manifest with hashes.
-- **Examples**: `examples/demo_pipeline.py` shows end-to-end usage.
+A minimal observability toolkit for AI/service pipelines: structured logs, metrics aggregation, and
+trace correlation for deterministic audits.
 
-## Install
+## Demo (3 seconds)
 
-```bash
-python -m pip install -e ".[dev]"
+![Demo](docs/assets/demo.gif)
+
+> `demo.gif` will be uploaded manually outside this PR. This placeholder keeps the README stable.
+
+## Why this matters
+
+- Deterministic traces make post-incident reviews reproducible.
+- Structured logs simplify downstream search and parsing.
+- Metrics snapshots create compact, portable audit evidence.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Producer --> TraceContext
+  TraceContext --> StructuredLog
+  TraceContext --> Metrics
+  StructuredLog --> Export
+  Metrics --> Export
+  Export --> Viewer
+  Export --> CLI
 ```
+
+## What this demonstrates
+
+- Determinism with seed-based correlation identifiers.
+- Trace/span propagation across structured logs.
+- Metrics aggregation with latency percentiles.
+- Snapshot exports for offline review.
+- Minimal primitives that are easy to test.
+
+## Use cases
+
+- Auditing model decisions in regulated environments.
+- Reproducing pipeline behavior during incidents.
+- Sharing trace snapshots with offline stakeholders.
 
 ## Quickstart
 
-```python
-from traceable_ai_observability import TraceContext, replay_pipeline, write_bundle
-
-context = TraceContext.new(subsystem="api", metadata={"owner": "team"})
-route = ["double", "increment"]
-input_value = 5
-
-
-def pipeline(value: int, steps: list[str]) -> int:
-    for step in steps:
-        if step == "double":
-            value *= 2
-        elif step == "increment":
-            value += 1
-    return value
-
-output_value = pipeline(input_value, route)
-
-events = [
-    context.event(event_type="start", payload={"input": input_value, "route": route}),
-    context.event(event_type="output", payload={"output": output_value}),
-]
-
-write_bundle(events, "bundle")
-report = replay_pipeline(
-    pipeline,
-    input_data=input_value,
-    captured_route=route,
-    expected_output=output_value,
-)
-print("Replay match:", report.match)
-```
-
-Run the demo:
+### macOS/Linux
 
 ```bash
-python examples/demo_pipeline.py
+python -m pip install -e .
+python -m pip install pytest ruff pyright
+python examples/demo_cli.py
+pytest -q
+```
+
+### Windows (PowerShell)
+
+```powershell
+python -m pip install -e .
+python -m pip install pytest ruff pyright
+python examples/demo_cli.py
+pytest -q
 ```
 
 ## Development
@@ -64,8 +78,10 @@ python examples/demo_pipeline.py
 python -m pip install -e ".[dev]"
 python tools/report_hidden_unicode.py
 python tools/sanitize_unicode.py
-pytest
 ruff check .
+ruff format --check .
+pyright
+pytest -q
 ```
 
 ## License
