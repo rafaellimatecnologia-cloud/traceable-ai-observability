@@ -97,4 +97,4 @@ pytest -q
 
 ## License
 
-MIT
+MIT License. See [LICENSE](https://github.com/rafaellimatecnologia-cloud/local-first-ai-service/blob/main/LICENSE).
