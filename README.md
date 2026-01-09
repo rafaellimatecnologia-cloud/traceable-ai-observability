@@ -40,7 +40,7 @@ flowchart LR
   Export --> CLI
 ```
 
- codex/create-traceable-ai-observability-repository
+
 ## Guarantees (Invariants)
 
 - Deterministic identifiers when seeded.
