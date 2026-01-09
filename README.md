@@ -18,20 +18,6 @@ snapshots, and trace correlation with offline-friendly exports.
 
 ![Demo CLI](docs/assets/demo.gif)
 
-(add gif after merge)
-=======
-![Types](https://img.shields.io/badge/types-pyright-blueviolet)
-![Coverage](https://img.shields.io/badge/coverage-artifact-informational)
-
-**Portfolio Note (Safe-to-Publish):** This repository is a clean-room sample intended for public review.
-
-A minimal observability toolkit for AI/service pipelines: structured logs, metrics aggregation, and
-trace correlation for deterministic audits.
-
-## Demo (3 seconds)
-
-![Demo](docs/assets/demo.gif)
-
 > `demo.gif` will be uploaded manually outside this PR. This placeholder keeps the README stable.
 
 ## Why this matters
